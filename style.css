@@ -1,0 +1,60 @@
+.grid {
+    position: relative;
+    padding: 7px;
+    border-radius: 7px;
+    background-color: black;
+}
+
+.grid-4-4 {
+    width: 400px;
+    height: 400px;
+}
+
+.grid-row-0 {
+    top: 12px
+}
+
+.grid-row-1 {
+    top: 112px
+}
+
+.grid-row-2 {
+    top: 212px
+}
+
+.grid-row-3 {
+    top: 312px
+}
+
+.grid-col-0 {
+    left: 12px
+}
+
+.grid-col-1 {
+    left: 112px
+}
+
+.grid-col-2 {
+    left: 212px
+}
+
+.grid-col-3 {
+    left: 312px
+}
+
+.cell,
+.tile {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 3px;
+}
+
+.cell {
+    background-color: darkgray;
+}
+
+.tile {
+    background-color: gray;
+    /*transition: left 0.5s, top 0.5s;*/
+}
