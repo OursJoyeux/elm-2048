@@ -2,7 +2,6 @@ module Main exposing (main)
 
 import Html exposing (..)
 import Keyboard exposing (KeyCode)
-import Random
 import Grid exposing (Grid, Tile, Direction(..))
 import View
 
@@ -31,12 +30,13 @@ init : ( Model, Cmd Msg )
 init =
     let
         grid =
-            Grid.make 4 4
-                |> Grid.set 1 1 2
-                |> Grid.set 2 1 2
-                |> Grid.set 1 2 2
-                |> Grid.set 2 2 4
-                |> Grid.set 2 3 8
+            Grid.make { w = 4, h = 4 }
+                |> Grid.set { x = 1, y = 1 } 2
+                |> Maybe.andThen (Grid.set { x = 2, y = 1 } 2)
+                |> Maybe.andThen (Grid.set { x = 1, y = 2 } 2)
+                |> Maybe.andThen (Grid.set { x = 2, y = 2 } 4)
+                |> Maybe.andThen (Grid.set { x = 2, y = 3 } 8)
+                |> Maybe.withDefault (Grid.make { w = 4, h = 4 })
     in
         ( Model 0 grid, Cmd.none )
 
@@ -47,7 +47,7 @@ init =
 
 type Msg
     = NewGame
-    | NewTile ( Int, Int, Tile )
+    | NewTile (Maybe Tile)
     | KeyDown KeyCode
 
 
@@ -57,13 +57,20 @@ update msg model =
         NewGame ->
             ( model, Cmd.none )
 
-        NewTile ( x, y, tile ) ->
-            ( { model | grid = Grid.set x y tile model.grid }, Cmd.none )
+        NewTile Nothing ->
+            ( model, Cmd.none )
+
+        NewTile (Just { pos, val }) ->
+            ( { model | grid = (Grid.set pos val model.grid) |> Maybe.withDefault model.grid }, Cmd.none )
 
         KeyDown code ->
             case codeToDirection code of
                 Just dir ->
-                    ( { model | grid = Grid.move dir model.grid }, Grid.genRandomTile NewTile model.grid )
+                    let
+                        newGrid =
+                            Grid.move dir model.grid
+                    in
+                        ( { model | grid = newGrid }, Grid.generate NewTile newGrid )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -89,7 +96,7 @@ codeToDirection code =
 
 
 
--- SUBSCRIPTIONS
+-- SUBSCRIPTIONS --
 
 
 subscriptions : Model -> Sub Msg

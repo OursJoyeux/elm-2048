@@ -14,12 +14,15 @@ viewGrid grid =
 
 viewCells : Int -> Int -> List (Html msg)
 viewCells width height =
-    List.range 0 (height - 1) |> List.map (viewCellRows width) |> List.concat
+    List.range 0 (height - 1)
+        |> List.map (viewCellRows width)
+        |> List.concat
 
 
 viewCellRows : Int -> Int -> List (Html msg)
 viewCellRows width row =
-    List.range 0 (width - 1) |> List.map (viewCell row)
+    List.range 0 (width - 1)
+        |> List.map (viewCell row)
 
 
 viewCell : Int -> Int -> Html msg
@@ -30,13 +33,12 @@ viewCell row col =
 viewTiles : Grid -> List (Html msg)
 viewTiles grid =
     grid
-        |> Grid.flat
-        |> List.filter (\( x, y, tile ) -> tile /= 0)
+        |> Grid.tiles
         |> List.map viewTile
 
 
-viewTile : ( Int, Int, Tile ) -> Html msg
-viewTile ( x, y, tile ) =
-    div [ class ("tile grid-row-" ++ toString y ++ " grid-col-" ++ toString x) ]
-        [ text (toString tile)
+viewTile : Tile -> Html msg
+viewTile { pos, val } =
+    div [ class ("tile grid-row-" ++ toString pos.y ++ " grid-col-" ++ toString pos.x) ]
+        [ text (toString val)
         ]

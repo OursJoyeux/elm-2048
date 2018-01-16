@@ -1,18 +1,27 @@
-module Grid exposing (Grid, Tile, Direction(..), make, width, height, get, set, flat, move, genRandomTile, randomTile)
+module Grid exposing (Grid, Tile, Dimension, Position, Value, Direction(..), make, width, height, get, set, tiles, move, moves, apply, generator, generate)
 
-import Array exposing (Array)
 import Random exposing (Generator)
+import List.Extra
+import Debug
 
 
-type alias Grid =
-    Array (Array Tile)
-
-
-type alias Lane =
-    Array Tile
+type Grid
+    = Grid { dim : Dimension, tiles : List Tile }
 
 
 type alias Tile =
+    { pos : Position, val : Value }
+
+
+type alias Dimension =
+    { w : Int, h : Int }
+
+
+type alias Position =
+    { x : Int, y : Int }
+
+
+type alias Value =
     Int
 
 
@@ -23,130 +32,229 @@ type Direction
     | Down
 
 
-type MergeOp
+type Move
     = Keep Tile
-    | Merge Tile Tile
+    | Move Tile Tile
+    | Merge Tile Tile Tile
 
 
-make : Int -> Int -> Grid
-make width height =
-    Array.repeat height <| Array.repeat width 0
+type alias MoveFactory =
+    Position -> Int -> Position
+
+
+make : Dimension -> Grid
+make dim =
+    Grid { dim = dim, tiles = [] }
 
 
 width : Grid -> Int
 width grid =
-    grid |> row 0 |> Array.length
+    dim grid |> .w
 
 
 height : Grid -> Int
 height grid =
-    grid |> Array.length
+    dim grid |> .h
 
 
-get : Int -> Int -> Grid -> Tile
-get x y grid =
-    grid
-        |> row y
-        |> Array.get x
-        |> Maybe.withDefault 0
+get : Position -> Grid -> Maybe Value
+get pos grid =
+    tiles grid
+        |> List.Extra.find (\t -> t.pos == pos)
+        |> Maybe.map .val
 
 
-set : Int -> Int -> Tile -> Grid -> Grid
-set x y tile grid =
-    let
-        newRow =
-            grid
-                |> row y
-                |> Array.set x tile
-    in
-        grid |> Array.set y newRow
+set : Position -> Value -> Grid -> Maybe Grid
+set pos val grid =
+    case grid |> get pos of
+        Nothing ->
+            Just
+                (Grid
+                    { dim = dim grid
+                    , tiles = { pos = pos, val = val } :: (tiles grid)
+                    }
+                )
+
+        Just _ ->
+            Nothing
 
 
-flat : Grid -> List ( Int, Int, Tile )
-flat grid =
-    grid
-        |> Array.toList
-        |> List.indexedMap
-            (\rowIndex row ->
-                row
-                    |> Array.toList
-                    |> List.indexedMap
-                        (\colIndex tile ->
-                            ( colIndex
-                            , rowIndex
-                            , tile
-                            )
-                        )
-            )
-        |> List.concat
+tiles : Grid -> List Tile
+tiles (Grid { tiles }) =
+    tiles
+
+
+dim : Grid -> Dimension
+dim (Grid { dim }) =
+    dim
 
 
 move : Direction -> Grid -> Grid
 move dir grid =
-    case dir of
-        Left ->
-            grid
-                |> Array.map moveLane
-
-        Right ->
-            grid
-                |> Array.map (reverse >> moveLane >> reverse)
-
-        Up ->
-            grid
-                |> transpose
-                |> Array.map moveLane
-                |> transpose
-
-        Down ->
-            grid
-                |> transpose
-                |> Array.map (reverse >> moveLane >> reverse)
-                |> transpose
+    grid |> apply (grid |> moves dir)
 
 
-genRandomTile : (( Int, Int, Tile ) -> msg) -> Grid -> Cmd msg
-genRandomTile msg grid =
-    Random.generate msg (randomTile grid)
-
-
-randomTile : Grid -> Generator ( Int, Int, Tile )
-randomTile grid =
+moves : Direction -> Grid -> List Move
+moves dir grid =
     let
-        mapGen ( x, y ) val =
-            ( x, y, val )
+        makePosRow old index =
+            { x = index, y = old.y }
+
+        makePosRowRev old index =
+            { x = (width grid) - index - 1, y = old.y }
+
+        makePosCol old index =
+            { x = old.x, y = index }
+
+        makePosColRev old index =
+            { x = old.x, y = (height grid) - index - 1 }
     in
-        Random.map2 mapGen (randomPosition grid) (randomValue 0.8)
+        case dir of
+            Left ->
+                grid
+                    |> rows
+                    |> List.map (lineMoves makePosRow [])
+                    |> List.concat
+
+            Right ->
+                grid
+                    |> rows
+                    |> List.map (List.reverse >> lineMoves makePosRowRev [])
+                    |> List.concat
+
+            Up ->
+                grid
+                    |> columns
+                    |> List.map (lineMoves makePosCol [])
+                    |> List.concat
+
+            Down ->
+                grid
+                    |> columns
+                    |> List.map (List.reverse >> lineMoves makePosColRev [])
+                    |> List.concat
+
+
+apply : List Move -> Grid -> Grid
+apply moves grid =
+    let
+        getTiles move =
+            case move of
+                Keep t ->
+                    t
+
+                Move _ t ->
+                    t
+
+                Merge _ _ t ->
+                    t
+    in
+        Grid { dim = dim grid, tiles = moves |> List.map getTiles }
+
+
+generator : Grid -> Generator (Maybe Tile)
+generator grid =
+    let
+        makeTile : Maybe Position -> Value -> Maybe Tile
+        makeTile pos val =
+            pos |> Maybe.map (\pos -> { pos = pos, val = val })
+    in
+        Random.map2 makeTile (randomPosition grid) (randomValue 0.8)
+
+
+generate : (Maybe Tile -> msg) -> Grid -> Cmd msg
+generate msg grid =
+    Random.generate msg (generator grid)
 
 
 
 -- PRIVATE --
 
 
-randomPosition : Grid -> Generator ( Int, Int )
+size : Grid -> Int
+size grid =
+    (width grid) * (height grid)
+
+
+rows : Grid -> List (List Tile)
+rows grid =
+    tiles grid
+        |> List.sortBy (.pos >> .y)
+        |> List.Extra.groupWhile (\t1 t2 -> t1.pos.y == t2.pos.y)
+        |> List.map (List.sortBy (.pos >> .x))
+
+
+columns : Grid -> List (List Tile)
+columns grid =
+    tiles grid
+        |> List.sortBy (.pos >> .x)
+        |> List.Extra.groupWhile (\t1 t2 -> t1.pos.x == t2.pos.x)
+        |> List.map (List.sortBy (.pos >> .y))
+        |> Debug.log "col"
+
+
+lineMoves : MoveFactory -> List Move -> List Tile -> List Move
+lineMoves factory acc tiles =
+    let
+        makeMove acc tile =
+            let
+                newPos =
+                    factory tile.pos (List.length acc)
+            in
+                if newPos == tile.pos then
+                    Keep tile
+                else
+                    Move tile { tile | pos = newPos }
+
+        makeMerge acc t1 t2 =
+            let
+                newPos =
+                    factory t1.pos (List.length acc)
+            in
+                Merge t1 t2 { pos = newPos, val = t1.val + t2.val }
+    in
+        case tiles of
+            [] ->
+                acc
+
+            [ a ] ->
+                (makeMove acc a) :: acc
+
+            a :: b :: rest ->
+                if a.val == b.val then
+                    rest |> lineMoves factory ((makeMerge acc a b) :: acc)
+                else
+                    b :: rest |> lineMoves factory ((makeMove acc a) :: acc)
+
+
+availablePositions : Grid -> List Position
+availablePositions grid =
+    let
+        all =
+            List.Extra.lift2 Position
+                (List.range 0 (width grid - 1))
+                (List.range 0 (height grid - 1))
+
+        occupied =
+            grid |> tiles |> List.map .pos
+    in
+        all |> List.filter (\pos -> not <| List.member pos occupied)
+
+
+randomPosition : Grid -> Generator (Maybe Position)
 randomPosition grid =
     let
-        available =
-            flat grid
-                |> List.filterMap
-                    (\( x, y, tile ) ->
-                        if tile == 0 then
-                            Just ( x, y )
-                        else
-                            Nothing
-                    )
+        avail =
+            grid |> availablePositions
     in
-        Random.int 0 (List.length available)
+        Random.int 0 ((List.length avail) - 1)
             |> Random.map
                 (\pos ->
-                    available
-                        |> List.drop pos
-                        |> List.head
-                        |> Maybe.withDefault ( 0, 0 )
+                    avail |> List.Extra.getAt pos
                 )
 
 
-randomValue : Float -> Generator Int
+randomValue : Float -> Generator Value
 randomValue p =
     Random.float 0 1
         |> Random.map
@@ -156,81 +264,3 @@ randomValue p =
                 else
                     4
             )
-
-
-moveLane : Lane -> Lane
-moveLane lane =
-    lane
-        |> Array.filter ((/=) 0)
-        |> merge
-        |> pad (Array.length lane)
-
-
-merge : Lane -> Lane
-merge lane =
-    lane
-        |> Array.toList
-        |> mergeRecursive Array.empty
-        |> Array.map
-            (\op ->
-                case op of
-                    Keep a ->
-                        a
-
-                    Merge a b ->
-                        a + b
-            )
-
-
-mergeRecursive : Array MergeOp -> List Tile -> Array MergeOp
-mergeRecursive acc lane =
-    case lane of
-        [] ->
-            acc
-
-        [ a ] ->
-            acc |> Array.push (Keep a)
-
-        a :: b :: rest ->
-            if a == b then
-                rest |> mergeRecursive (Array.push (Merge a b) acc)
-            else
-                b :: rest |> mergeRecursive (Array.push (Keep a) acc)
-
-
-
--- HELPERS --
-
-
-row : Int -> Grid -> Lane
-row index grid =
-    grid
-        |> Array.get index
-        |> Maybe.withDefault Array.empty
-
-
-col : Int -> Grid -> Lane
-col index grid =
-    grid
-        |> Array.map
-            (Array.get index
-                >> Maybe.withDefault 0
-            )
-
-
-reverse : Lane -> Lane
-reverse lane =
-    lane |> Array.foldr Array.push Array.empty
-
-
-transpose : Grid -> Grid
-transpose grid =
-    grid
-        |> row 0
-        |> Array.indexedMap (\index _ -> col index grid)
-
-
-pad : Int -> Lane -> Lane
-pad len lane =
-    Array.repeat (len - Array.length lane) 0
-        |> Array.append lane
