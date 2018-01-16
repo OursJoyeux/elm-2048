@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Keyboard exposing (KeyCode)
 import Grid exposing (Grid, Tile, Direction(..))
 import View
@@ -67,10 +68,22 @@ update msg model =
             case codeToDirection code of
                 Just dir ->
                     let
+                        moves =
+                            model.grid |> Grid.moves dir
+
+                        newScore =
+                            model.score + Grid.score moves
+
                         newGrid =
-                            Grid.move dir model.grid
+                            model.grid |> Grid.apply moves
+
+                        cmd =
+                            if Grid.hasMoved moves then
+                                newGrid |> Grid.generate NewTile
+                            else
+                                Cmd.none
                     in
-                        ( { model | grid = newGrid }, Grid.generate NewTile newGrid )
+                        ( { model | grid = newGrid, score = newScore }, cmd )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -110,4 +123,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    View.viewGrid model.grid
+    div [ class "game" ]
+        [ View.viewGrid model.grid
+        , div [ class "score" ] [ model.score |> toString |> text ]
+        ]

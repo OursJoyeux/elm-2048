@@ -1,8 +1,7 @@
-module Grid exposing (Grid, Tile, Dimension, Position, Value, Direction(..), make, width, height, get, set, tiles, move, moves, apply, generator, generate)
+module Grid exposing (Grid, Tile, Dimension, Position, Value, Direction(..), make, width, height, get, set, tiles, move, moves, apply, score, hasMoved, generator, generate)
 
 import Random exposing (Generator)
 import List.Extra
-import Debug
 
 
 type Grid
@@ -152,6 +151,38 @@ apply moves grid =
         Grid { dim = dim grid, tiles = moves |> List.map getTiles }
 
 
+score : List Move -> Int
+score moves =
+    moves
+        |> List.map
+            (\m ->
+                case m of
+                    Merge _ _ res ->
+                        res.val
+
+                    _ ->
+                        0
+            )
+        |> List.sum
+
+
+hasMoved : List Move -> Bool
+hasMoved moves =
+    moves
+        |> List.any
+            (\m ->
+                case m of
+                    Keep _ ->
+                        False
+
+                    Move _ _ ->
+                        True
+
+                    Merge _ _ _ ->
+                        True
+            )
+
+
 generator : Grid -> Generator (Maybe Tile)
 generator grid =
     let
@@ -190,7 +221,6 @@ columns grid =
         |> List.sortBy (.pos >> .x)
         |> List.Extra.groupWhile (\t1 t2 -> t1.pos.x == t2.pos.x)
         |> List.map (List.sortBy (.pos >> .y))
-        |> Debug.log "col"
 
 
 lineMoves : MoveFactory -> List Move -> List Tile -> List Move
