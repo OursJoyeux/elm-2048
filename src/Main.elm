@@ -5,6 +5,7 @@ import Html.Attributes exposing (..)
 import Keyboard exposing (KeyCode)
 import Grid exposing (Grid, Tile, Direction(..))
 import View
+import Random
 
 
 main : Platform.Program Basics.Never Model Msg
@@ -32,14 +33,8 @@ init =
     let
         grid =
             Grid.make { w = 4, h = 4 }
-                |> Grid.set { x = 1, y = 1 } 2
-                |> Maybe.andThen (Grid.set { x = 2, y = 1 } 2)
-                |> Maybe.andThen (Grid.set { x = 1, y = 2 } 2)
-                |> Maybe.andThen (Grid.set { x = 2, y = 2 } 4)
-                |> Maybe.andThen (Grid.set { x = 2, y = 3 } 8)
-                |> Maybe.withDefault (Grid.make { w = 4, h = 4 })
     in
-        ( Model 0 grid, Cmd.none )
+        ( Model 0 grid, Random.generate InitGrid (Grid.init grid) )
 
 
 
@@ -48,6 +43,7 @@ init =
 
 type Msg
     = NewGame
+    | InitGrid Grid
     | NewTile (Maybe Tile)
     | KeyDown KeyCode
 
@@ -57,6 +53,9 @@ update msg model =
     case msg of
         NewGame ->
             ( model, Cmd.none )
+
+        InitGrid grid ->
+            ( { model | grid = grid }, Cmd.none )
 
         NewTile Nothing ->
             ( model, Cmd.none )

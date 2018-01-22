@@ -1,4 +1,4 @@
-module Grid exposing (Grid, Tile, Dimension, Position, Value, Direction(..), make, width, height, get, set, tiles, move, moves, apply, score, hasMoved, generator, generate)
+module Grid exposing (Grid, Tile, Dimension, Position, Value, Direction(..), make, init, width, height, get, set, tiles, move, moves, apply, score, hasMoved, generator, generate)
 
 import Random exposing (Generator)
 import List.Extra
@@ -44,6 +44,24 @@ type alias MoveFactory =
 make : Dimension -> Grid
 make dim =
     Grid { dim = dim, tiles = [] }
+
+
+init : Grid -> Generator Grid
+init grid =
+    let
+        genAndSet : Grid -> Generator (Maybe Grid)
+        genAndSet grid =
+            grid
+                |> generator
+                |> Random.map (Maybe.andThen (\tile -> grid |> set tile.pos tile.val))
+    in
+        grid
+            |> genAndSet
+            |> Random.andThen
+                (Maybe.map genAndSet
+                    >> Maybe.withDefault (Random.bool |> Random.map (always Nothing))
+                )
+            |> Random.map (Maybe.withDefault grid)
 
 
 width : Grid -> Int
@@ -137,7 +155,7 @@ moves dir grid =
 apply : List Move -> Grid -> Grid
 apply moves grid =
     let
-        getTiles move =
+        getNewTile move =
             case move of
                 Keep t ->
                     t
@@ -148,7 +166,7 @@ apply moves grid =
                 Merge _ _ t ->
                     t
     in
-        Grid { dim = dim grid, tiles = moves |> List.map getTiles }
+        Grid { dim = dim grid, tiles = moves |> List.map getNewTile }
 
 
 score : List Move -> Int

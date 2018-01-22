@@ -14828,23 +14828,49 @@ var _user$project$Grid$set = F3(
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	});
+var _user$project$Grid$init = function (grid) {
+	var genAndSet = function (grid) {
+		return A2(
+			_elm_lang$core$Random$map,
+			_elm_lang$core$Maybe$andThen(
+				function (tile) {
+					return A3(_user$project$Grid$set, tile.pos, tile.val, grid);
+				}),
+			_user$project$Grid$generator(grid));
+	};
+	return A2(
+		_elm_lang$core$Random$map,
+		_elm_lang$core$Maybe$withDefault(grid),
+		A2(
+			_elm_lang$core$Random$andThen,
+			function (_p11) {
+				return A2(
+					_elm_lang$core$Maybe$withDefault,
+					A2(
+						_elm_lang$core$Random$map,
+						_elm_lang$core$Basics$always(_elm_lang$core$Maybe$Nothing),
+						_elm_lang$core$Random$bool),
+					A2(_elm_lang$core$Maybe$map, genAndSet, _p11));
+			},
+			genAndSet(grid)));
+};
 var _user$project$Grid$apply = F2(
 	function (moves, grid) {
-		var getTiles = function (move) {
-			var _p11 = move;
-			switch (_p11.ctor) {
+		var getNewTile = function (move) {
+			var _p12 = move;
+			switch (_p12.ctor) {
 				case 'Keep':
-					return _p11._0;
+					return _p12._0;
 				case 'Move':
-					return _p11._1;
+					return _p12._1;
 				default:
-					return _p11._2;
+					return _p12._2;
 			}
 		};
 		return _user$project$Grid$Grid(
 			{
 				dim: _user$project$Grid$dim(grid),
-				tiles: A2(_elm_lang$core$List$map, getTiles, moves)
+				tiles: A2(_elm_lang$core$List$map, getNewTile, moves)
 			});
 	});
 var _user$project$Grid$Down = {ctor: 'Down'};
@@ -14891,28 +14917,28 @@ var _user$project$Grid$lineMoves = F3(
 							tile,
 							{pos: newPos}));
 				});
-			var _p12 = tiles;
-			if (_p12.ctor === '[]') {
+			var _p13 = tiles;
+			if (_p13.ctor === '[]') {
 				return acc;
 			} else {
-				if (_p12._1.ctor === '[]') {
+				if (_p13._1.ctor === '[]') {
 					return {
 						ctor: '::',
-						_0: A2(makeMove, acc, _p12._0),
+						_0: A2(makeMove, acc, _p13._0),
 						_1: acc
 					};
 				} else {
-					var _p15 = _p12._1._1;
-					var _p14 = _p12._1._0;
-					var _p13 = _p12._0;
-					if (_elm_lang$core$Native_Utils.eq(_p13.val, _p14.val)) {
+					var _p16 = _p13._1._1;
+					var _p15 = _p13._1._0;
+					var _p14 = _p13._0;
+					if (_elm_lang$core$Native_Utils.eq(_p14.val, _p15.val)) {
 						var _v7 = factory,
 							_v8 = {
 							ctor: '::',
-							_0: A3(makeMerge, acc, _p13, _p14),
+							_0: A3(makeMerge, acc, _p14, _p15),
 							_1: acc
 						},
-							_v9 = _p15;
+							_v9 = _p16;
 						factory = _v7;
 						acc = _v8;
 						tiles = _v9;
@@ -14921,10 +14947,10 @@ var _user$project$Grid$lineMoves = F3(
 						var _v10 = factory,
 							_v11 = {
 							ctor: '::',
-							_0: A2(makeMove, acc, _p13),
+							_0: A2(makeMove, acc, _p14),
 							_1: acc
 						},
-							_v12 = {ctor: '::', _0: _p14, _1: _p15};
+							_v12 = {ctor: '::', _0: _p15, _1: _p16};
 						factory = _v10;
 						acc = _v11;
 						tiles = _v12;
@@ -14958,8 +14984,8 @@ var _user$project$Grid$moves = F2(
 			function (old, index) {
 				return {x: index, y: old.y};
 			});
-		var _p16 = dir;
-		switch (_p16.ctor) {
+		var _p17 = dir;
+		switch (_p17.ctor) {
 			case 'Left':
 				return _elm_lang$core$List$concat(
 					A2(
@@ -14973,12 +14999,12 @@ var _user$project$Grid$moves = F2(
 				return _elm_lang$core$List$concat(
 					A2(
 						_elm_lang$core$List$map,
-						function (_p17) {
+						function (_p18) {
 							return A3(
 								_user$project$Grid$lineMoves,
 								makePosRowRev,
 								{ctor: '[]'},
-								_elm_lang$core$List$reverse(_p17));
+								_elm_lang$core$List$reverse(_p18));
 						},
 						_user$project$Grid$rows(grid)));
 			case 'Up':
@@ -14994,12 +15020,12 @@ var _user$project$Grid$moves = F2(
 				return _elm_lang$core$List$concat(
 					A2(
 						_elm_lang$core$List$map,
-						function (_p18) {
+						function (_p19) {
 							return A3(
 								_user$project$Grid$lineMoves,
 								makePosColRev,
 								{ctor: '[]'},
-								_elm_lang$core$List$reverse(_p18));
+								_elm_lang$core$List$reverse(_p19));
 						},
 						_user$project$Grid$columns(grid)));
 		}
@@ -15159,47 +15185,6 @@ var _user$project$Main$Model = F2(
 	function (a, b) {
 		return {score: a, grid: b};
 	});
-var _user$project$Main$init = function () {
-	var grid = A2(
-		_elm_lang$core$Maybe$withDefault,
-		_user$project$Grid$make(
-			{w: 4, h: 4}),
-		A2(
-			_elm_lang$core$Maybe$andThen,
-			A2(
-				_user$project$Grid$set,
-				{x: 2, y: 3},
-				8),
-			A2(
-				_elm_lang$core$Maybe$andThen,
-				A2(
-					_user$project$Grid$set,
-					{x: 2, y: 2},
-					4),
-				A2(
-					_elm_lang$core$Maybe$andThen,
-					A2(
-						_user$project$Grid$set,
-						{x: 1, y: 2},
-						2),
-					A2(
-						_elm_lang$core$Maybe$andThen,
-						A2(
-							_user$project$Grid$set,
-							{x: 2, y: 1},
-							2),
-						A3(
-							_user$project$Grid$set,
-							{x: 1, y: 1},
-							2,
-							_user$project$Grid$make(
-								{w: 4, h: 4})))))));
-	return {
-		ctor: '_Tuple2',
-		_0: A2(_user$project$Main$Model, 0, grid),
-		_1: _elm_lang$core$Platform_Cmd$none
-	};
-}();
 var _user$project$Main$KeyDown = function (a) {
 	return {ctor: 'KeyDown', _0: a};
 };
@@ -15215,6 +15200,14 @@ var _user$project$Main$update = F2(
 		switch (_p1.ctor) {
 			case 'NewGame':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'InitGrid':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{grid: _p1._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'NewTile':
 				if (_p1._0.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -15251,6 +15244,21 @@ var _user$project$Main$update = F2(
 				}
 		}
 	});
+var _user$project$Main$InitGrid = function (a) {
+	return {ctor: 'InitGrid', _0: a};
+};
+var _user$project$Main$init = function () {
+	var grid = _user$project$Grid$make(
+		{w: 4, h: 4});
+	return {
+		ctor: '_Tuple2',
+		_0: A2(_user$project$Main$Model, 0, grid),
+		_1: A2(
+			_elm_lang$core$Random$generate,
+			_user$project$Main$InitGrid,
+			_user$project$Grid$init(grid))
+	};
+}();
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();
 var _user$project$Main$NewGame = {ctor: 'NewGame'};
@@ -15258,7 +15266,7 @@ var _user$project$Main$NewGame = {ctor: 'NewGame'};
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Msg":{"args":[],"tags":{"NewGame":[],"NewTile":["Maybe.Maybe Grid.Tile"],"KeyDown":["Keyboard.KeyCode"]}}},"aliases":{"Grid.Value":{"args":[],"type":"Int"},"Keyboard.KeyCode":{"args":[],"type":"Int"},"Grid.Position":{"args":[],"type":"{ x : Int, y : Int }"},"Grid.Tile":{"args":[],"type":"{ pos : Grid.Position, val : Grid.Value }"}},"message":"Main.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Grid.Grid":{"args":[],"tags":{"Grid":["{ dim : Grid.Dimension, tiles : List Grid.Tile }"]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Msg":{"args":[],"tags":{"NewGame":[],"NewTile":["Maybe.Maybe Grid.Tile"],"InitGrid":["Grid.Grid"],"KeyDown":["Keyboard.KeyCode"]}}},"aliases":{"Grid.Value":{"args":[],"type":"Int"},"Keyboard.KeyCode":{"args":[],"type":"Int"},"Grid.Position":{"args":[],"type":"{ x : Int, y : Int }"},"Grid.Tile":{"args":[],"type":"{ pos : Grid.Position, val : Grid.Value }"},"Grid.Dimension":{"args":[],"type":"{ w : Int, h : Int }"}},"message":"Main.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])
