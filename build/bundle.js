@@ -15038,8 +15038,27 @@ var _user$project$Grid$move = F2(
 			grid);
 	});
 
+var _user$project$View$viewScore = function (score) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('score'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'Score : ',
+					_elm_lang$core$Basics$toString(score))),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$View$viewTile = function (_p0) {
 	var _p1 = _p0;
+	var _p3 = _p1.val;
 	var _p2 = _p1.pos;
 	return A2(
 		_elm_lang$html$Html$div,
@@ -15055,13 +15074,19 @@ var _user$project$View$viewTile = function (_p0) {
 						A2(
 							_elm_lang$core$Basics_ops['++'],
 							' grid-col-',
-							_elm_lang$core$Basics$toString(_p2.x))))),
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_elm_lang$core$Basics$toString(_p2.x),
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									' tile-val-',
+									_elm_lang$core$Basics$toString(_p3))))))),
 			_1: {ctor: '[]'}
 		},
 		{
 			ctor: '::',
 			_0: _elm_lang$html$Html$text(
-				_elm_lang$core$Basics$toString(_p1.val)),
+				_elm_lang$core$Basics$toString(_p3)),
 			_1: {ctor: '[]'}
 		});
 };
@@ -15149,19 +15174,7 @@ var _user$project$Main$view = function (model) {
 			_0: _user$project$View$viewGrid(model.grid),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class('score'),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(
-							_elm_lang$core$Basics$toString(model.score)),
-						_1: {ctor: '[]'}
-					}),
+				_0: _user$project$View$viewScore(model.score),
 				_1: {ctor: '[]'}
 			}
 		});

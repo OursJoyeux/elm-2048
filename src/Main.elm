@@ -124,5 +124,5 @@ view : Model -> Html Msg
 view model =
     div [ class "game" ]
         [ View.viewGrid model.grid
-        , div [ class "score" ] [ model.score |> toString |> text ]
+        , View.viewScore model.score
         ]

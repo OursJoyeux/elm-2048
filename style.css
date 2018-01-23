@@ -1,3 +1,8 @@
+html, body {
+    margin: 0;
+    font-family: "Roboto", sans-serif;
+}
+
 .grid {
     position: relative;
     padding: 7px;
@@ -57,4 +62,28 @@
 .tile {
     background-color: gray;
     /*transition: left 0.5s, top 0.5s;*/
+    text-align: center;
+    line-height: 90px;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.tile-val-128,
+.tile-val-256,
+.tile-val-512 {
+    font-size: 34px;
+}
+
+
+.tile-val-1024,
+.tile-val-2048,
+.tile-val-4096,
+.tile-val-8192 {
+    font-size: 30px;
+}
+
+.tile-val-16384,
+.tile-val-32768,
+.tile-val-65536 {
+    font-size: 24px;
 }

@@ -39,6 +39,21 @@ viewTiles grid =
 
 viewTile : Tile -> Html msg
 viewTile { pos, val } =
-    div [ class ("tile grid-row-" ++ toString pos.y ++ " grid-col-" ++ toString pos.x) ]
+    div
+        [ "tile grid-row-"
+            ++ toString pos.y
+            ++ " grid-col-"
+            ++ toString pos.x
+            ++ " tile-val-"
+            ++ toString val
+            |> class
+        ]
         [ text (toString val)
+        ]
+
+
+viewScore : Int -> Html msg
+viewScore score =
+    div [ class "score" ]
+        [ "Score : " ++ toString score |> text
         ]
